@@ -1,5 +1,9 @@
 package resource.structure;
 
-public class SetTopBox {
+public class SetTopBox extends ResourceDecorator {
+	
+	public SetTopBox(Resource inner) {
+		super(inner, 30.0, "SetTopBox");
+	}
 
 }

@@ -1,5 +1,7 @@
 package person.structure;
 
-public class NaturalPerson {
-
+public final class NaturalPerson extends Person {
+	public NaturalPerson(String name) {
+		super(name);
+	}
 }

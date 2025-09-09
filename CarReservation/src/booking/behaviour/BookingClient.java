@@ -1,5 +1,209 @@
 package booking.behaviour;
 
+import java.util.Scanner;
+
+import booking.structure.Booking;
+import person.behaviour.PersonService;
+import resource.behaviour.ResourceService;
+
 public class BookingClient {
+
+	private interface Command {
+		void execute();
+
+		void undo();
+	}
+
+	private static final class CreateCommand implements Command {
+		private final BookingService bookingService;
+		private final String language;
+		private final String bookingId;
+		private final String personName;
+		private final String resourceName;
+		private final double price;
+
+		public CreateCommand(BookingService bookingService, String language, String bookingId, String personName,
+				String resourceName, double price) {
+			this.bookingService = bookingService;
+			this.language = language;
+			this.bookingId = bookingId;
+			this.personName = personName;
+			this.resourceName = resourceName;
+			this.price = price;
+		}
+
+		public void execute() {
+			bookingService.createBooking(language, bookingId, personName, resourceName, price);
+		}
+
+		public void undo() {
+			bookingService.deleteBooking(bookingId);
+		}
+	}
+
+	private static final class DeleteCommand implements Command {
+		private final BookingService bookingService;
+		private final String bookingId;
+		// Snapshot für Undo
+		private String snapLanguage;
+		private String snapPersonName;
+		private String snapResourceName;
+		private double snapPrice;
+		
+		public DeleteCommand(BookingService bookingService, String bookingId) {
+			this.bookingService = bookingService;
+			this.bookingId = bookingId;
+		}
+
+		public void execute() {
+			Booking b = bookingService.getBookingById(bookingId);
+			if (b == null)
+				throw new IllegalArgumentException("Booking with id " + bookingId + " not found");
+			this.snapLanguage = b.header().startsWith("Booking") ? "EN" : "DE";
+			this.snapPersonName = b.getPerson().getName();
+			this.snapResourceName = b.getResource().getName();
+			this.snapPrice = b.getPrice();
+			
+			bookingService.deleteBooking(bookingId);
+		}
+
+		public void undo() {
+			bookingService.createBooking(snapLanguage, bookingId, snapPersonName, snapResourceName, snapPrice);
+		}
+	}
+
+	private static final class History {
+		private final Command[] undo = new Command[200];
+		private final Command[] redo = new Command[200];
+		private int uTop = 0, rTop = 0;
+
+		public void execute(Command cmd) {
+			cmd.execute();
+			undo[uTop++] = cmd;
+			rTop = 0; // redo stack löschen
+		}
+
+		boolean canUndo() {
+			return uTop > 0;
+		}
+
+		boolean canRedo() {
+			return rTop > 0;
+		}
+
+		public void undo() {
+			if (uTop > 0) {
+				Command cmd = undo[--uTop];
+				cmd.undo();
+				redo[rTop++] = cmd;
+			}
+		}
+
+		public void redo() {
+			if (rTop > 0) {
+				Command cmd = redo[--rTop];
+				cmd.execute();
+				undo[uTop++] = cmd;
+			}
+		}
+	}
+
+	// Booking Client
+	private final BookingService bookingSrvce;
+	private final PersonService personService;
+	private final ResourceService resourceService;
+	private final History history = new History();
+	private final Scanner scanner = new Scanner(System.in);
+
+	public BookingClient(PersonService personService, ResourceService resourceService) {
+		this.personService = personService;
+		this.resourceService = resourceService;
+		this.bookingSrvce = new BookingService(personService, resourceService);
+	}
+
+	public void start() {
+		while (true) {
+			System.out.println("1. Daten eingeben");
+			System.out.println("2. Daten löschen");
+			System.out.println("3. Daten ausgeben");
+			System.out.println("4. Undo");
+			System.out.println("5. Redo");
+			System.out.println("6. Exit");
+
+			int choice = scanner.nextInt();
+			scanner.nextLine();
+
+			try {
+				switch (choice) {
+				case 1:
+					createBooking();
+					break;
+				case 2:
+					deleteBooking();
+					break;
+				case 3:
+					bookingSrvce.listBookings();
+					break;
+				case 4:
+					if (history.canUndo())
+						history.undo();
+					else
+						System.out.println("Nothing to undo.");
+					break;
+				case 5:
+					if (history.canRedo())
+						history.redo();
+					else
+						System.out.println("Nothing to redo.");
+					break;
+				case 6:
+					System.out.println("Exiting...");
+					return;
+				default:
+					System.out.println("Invalid choice. Please try again.");
+				}
+			} catch (Exception ex) {
+				System.out.println("Error: " + ex.getMessage());
+			}
+		}
+	}
+
+	private void createBooking() {
+		System.out.println("Enter language (german/english): ");
+		String language = scanner.nextLine();
+		
+		// Map auf "EN" oder "DE"
+		String langCode = language.toLowerCase().startsWith("e") ? "EN" : "DE";
+
+		System.out.println("Enter booking ID: ");
+		String bookingId = scanner.nextLine();
+
+		System.out.println("Enter person name: ");
+		String personName = scanner.nextLine();
+
+		System.out.println("Enter resource name: ");
+		String resourceName = scanner.nextLine();
+
+		System.out.println("Enter price: ");
+		double price = Double.parseDouble(scanner.nextLine());
+
+		history.execute(new CreateCommand(bookingSrvce, langCode, bookingId, personName, resourceName, price));
+	}
+
+	private void deleteBooking() {
+		System.out.println("Enter booking ID to delete: ");
+		String bookingId = scanner.nextLine();
+		history.execute(new DeleteCommand(bookingSrvce, bookingId));
+	}
+
+	private void listBookings() {
+		bookingSrvce.listBookings();
+	}
+
+	public static void main(String[] args) {
+		PersonService personService = new PersonService();
+		ResourceService resourceService = new ResourceService();
+		new BookingClient(personService, resourceService).start();
+	}
 
 }
