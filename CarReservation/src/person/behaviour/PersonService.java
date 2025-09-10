@@ -2,6 +2,8 @@ package person.behaviour;
 
 import person.structure.Person;
 import person.structure.PersonFactory;
+import java.util.Arrays;
+import java.util.List;
 
 public class PersonService {
 	// Speicher
@@ -62,5 +64,10 @@ public class PersonService {
 				return i;
 		}
 		return -1;
+	}
+	
+	// Benötigt für Authentication
+	public List<Person> getAllPersons() {
+		return Arrays.asList(Arrays.copyOf(store, size));
 	}
 }
