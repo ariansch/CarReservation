@@ -2,6 +2,8 @@ package CarReservationService;
 
 import java.util.Scanner;
 
+import authentication.behaviour.AuthenticationClient;
+import authentication.behaviour.AuthenticationService;
 import booking.behaviour.BookingClient;
 import booking.behaviour.BookingService;
 import person.behaviour.PersonClient;
@@ -13,6 +15,7 @@ public class CarReservationService {
 	
 	private final PersonService personService = new PersonService();
 	private final ResourceService resourceService = new ResourceService();
+	private final AuthenticationService authService = new AuthenticationService(personService);
 	private final BookingService bookingService = new BookingService(personService, resourceService);
 	
 	private final Scanner scanner = new Scanner(System.in);
@@ -22,8 +25,9 @@ public class CarReservationService {
 			System.out.println("\n=== Car Reservation Service ===");
 			System.out.println("1. Personen verwalten");
 			System.out.println("2. Ressourcen verwalten");
-			System.out.println("3. Buchungen verwalten");
-			System.out.println("4. Beenden");
+			System.out.println("3. Authentifizierungen verwalten");
+			System.out.println("4. Buchungen verwalten");
+			System.out.println("5. Beenden");
 			
 			int choice = readInt();
 			try {
@@ -35,9 +39,12 @@ public class CarReservationService {
 					new ResourceClient(resourceService).start();
 					break;
 				case 3:
-					new BookingClient(personService, resourceService).start();
+					new AuthenticationClient(personService).start();
 					break;
 				case 4:
+					new BookingClient(personService, resourceService).start();
+					break;
+				case 5:
 					System.out.println("Auf Wiedersehen!");
 					return;
 				default:
