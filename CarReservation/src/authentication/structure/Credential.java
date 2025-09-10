@@ -1,40 +1,23 @@
 package authentication.structure;
 
 public class Credential {
-	private String username;
-	private String password;
-	private String fingerprint;
-	private String eyeScanData;
+	//Type of credential, e.g., "password", fingerprint, "eye scan"
+	private String type;
 	
-	public String getUsername() {
-		return username;
+	//Value of the credential, e.g., actual password, fingerprint data, eye scan data
+	private String value;
+	
+	public Credential(String type, String value) {
+		this.type = type;
+		this.value = value;
 	}
 	
-	public void setUsername(String username) {
-		this.username = username;
+	public String getType() {
+		return type;
 	}
 	
-	public String getPassword() {
-		return password;
+	public String getValue() {
+		return value;
 	}
 	
-	public void setPassword(String password) {
-		this.password = password;
-	}
-	
-	public String getFingerprint() {
-		return fingerprint;
-	}
-	
-	public void setFingerprint(String fingerprint) {
-		this.fingerprint = fingerprint;
-	}
-	
-	public String getEyeScanData() {
-		return eyeScanData;
-	}
-	
-	public void setEyeScanData(String eyeScanData) {
-		this.eyeScanData = eyeScanData;
-	}
 }
