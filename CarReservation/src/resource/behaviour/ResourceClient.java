@@ -93,12 +93,14 @@ public class ResourceClient {
 	
 	public void start() {
 		while (true) {
-			System.out.println("1. Daten eingeben");
-			System.out.println("2. Daten löschen");
-			System.out.println("3. Daten ausgeben");
+			System.out.println("\n--- Resource Menu ---");
+			System.out.println("1. Add a Car");
+			System.out.println("2. Delete a Car");
+			System.out.println("3. Show Cars");
 			System.out.println("4. Undo");
 			System.out.println("5. Redo");
-			System.out.println("6. Exit");
+			System.out.println("6. Back to Main Menu");
+			System.out.print("Your choice: ");
 			
 			int choice = scanner.nextInt();
 			scanner.nextLine();

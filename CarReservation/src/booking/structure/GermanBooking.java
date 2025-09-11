@@ -15,7 +15,7 @@ public final class GermanBooking extends Booking {
 	
 	@Override
 	public String body() {
-		return "Person: " + getPerson() + ", Resource: " + getResource() + ", Preis: " + getPrice() + " EUR";
+		return "Person: " + getPerson() + ", Auto: " + getResource() + ", Preis: " + getPrice() + " EUR";
 	}
 	
 	@Override

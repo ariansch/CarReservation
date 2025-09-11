@@ -23,11 +23,12 @@ public class CarReservationService {
 	public void start() {
 		while (true) {
 			System.out.println("\n=== Car Reservation Service ===");
-			System.out.println("1. Personen verwalten");
-			System.out.println("2. Ressourcen verwalten");
-			System.out.println("3. Authentifizierungen verwalten");
-			System.out.println("4. Buchungen verwalten");
-			System.out.println("5. Beenden");
+			System.out.println("1. Manage Persons");
+			System.out.println("2. Manage Resources");
+			System.out.println("3. Manage Authentication");
+			System.out.println("4. Manage Bookings");
+			System.out.println("5. Exit");
+			System.out.print("Your choice: ");
 			
 			int choice = readInt();
 			try {
@@ -45,10 +46,10 @@ public class CarReservationService {
 					new BookingClient(personService, resourceService).start();
 					break;
 				case 5:
-					System.out.println("Auf Wiedersehen!");
+					System.out.println("Goodbye!");
 					return;
 				default:
-					System.out.println("Ungültige Auswahl. Bitte erneut versuchen.");
+					System.out.println("Invalid choice. Please try again.");
 				}
 			} catch (Exception ex) {
 				System.out.println("Error: " + ex.getMessage());

@@ -15,7 +15,7 @@ public final class EnglishBooking extends Booking {
 
 	@Override
 	public String body() {
-		return "Person: " + getPerson() + ", Resource: " + getResource() + ", Price: " + getPrice() + " USD";
+		return "Person: " + getPerson() + ", Car: " + getResource() + ", Price: " + getPrice() + " USD";
 	}
 
 	@Override
