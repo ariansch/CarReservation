@@ -2,6 +2,7 @@ package booking.behaviour;
 
 import booking.structure.Booking;
 import booking.structure.BookingBuilder;
+import booking.structure.Lang;
 import person.behaviour.PersonService;
 import resource.behaviour.ResourceService;
 
@@ -22,7 +23,7 @@ public class BookingService {
 		var person = personService.findPersonByName(personName);
 		var resource = resourceService.getSelectedResource(resourceName);
 		
-		var lang = "EN".equalsIgnoreCase(language) ? BookingBuilder.Lang.EN : BookingBuilder.Lang.DE;
+		var lang = "EN".equalsIgnoreCase(language) ? Lang.EN : Lang.DE;
 		
 		BookingBuilder builder = new BookingBuilder()
 				.id(bookingId)

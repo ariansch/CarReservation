@@ -4,7 +4,6 @@ import person.structure.Person;
 import resource.structure.Resource;
 
 public final class BookingBuilder {
-	public enum Lang { DE, EN }
 	
 	private String bookingId;
 	private Person person;
