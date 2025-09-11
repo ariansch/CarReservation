@@ -1,13 +1,11 @@
 package authentication.behaviour;
 
-import java.util.List; // NEU
+import java.util.List;
 import java.util.Scanner;
 import java.util.Stack;
 import authentication.structure.*;
-import booking.behaviour.BookingClient;
-import person.behaviour.PersonService; // NEU
-import person.structure.Person; // NEU
-import resource.behaviour.ResourceService;
+import person.behaviour.PersonService;
+import person.structure.Person; 
 
 public class AuthenticationClient {
 
