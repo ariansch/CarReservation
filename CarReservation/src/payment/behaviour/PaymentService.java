@@ -1,41 +1,45 @@
 package payment.behaviour;
 
 import booking.behaviour.BookingService;
+import booking.structure.Booking;
 import payment.structure.Account;
 import payment.structure.CurrencyAmount;
-import payment.structure.GoogleWalletProcessor;
-import payment.structure.MobileMoneyWalletProcessor;
 import payment.structure.PaymentProcessor;
-import payment.structure.PaymentType;
-import payment.structure.PaypalProcessor;
 import person.behaviour.PersonService;
 
 public class PaymentService {
 
-	public PaymentService() {
+	private final PersonService personService;
+	private final BookingService bookingService;
+
+	public PaymentService(PersonService personService, BookingService bookingService) {
+		this.personService = personService;
+		this.bookingService = bookingService;
 	}
 
-	public boolean payAmount(PaymentType type, Account sender, Account receiver, CurrencyAmount amount) {
-		// Wählt die passende Implementierung basierend auf dem PaymentType aus
-		PaymentProcessor processor = createProcessor(type);
+	public void payAmount(PaymentProcessor processor, String bookingId) {
+		try {
+			// Schritt 1: Die zugehörige Buchung über den BookingService finden
+			Booking bookingToPay = bookingService.getBookingById(bookingId);
+			if (bookingToPay == null) {
+				System.out.println("Payment failed: Booking with ID '" + bookingId + "' not found.");
+				return;
+			}
 
-		System.out.println("PaymentService is processing a payment of " + amount + " from "
-				+ sender.getOwner().getName() + " using " + type);
-		// Führt den gesamten 3-Schritte-Zahlungsprozess aus
-		return processor.processPayment(sender, receiver, amount);
-	}
+			// Schritt 2: Benötigte Daten aus der Buchung extrahieren
+			Account senderAccount = bookingToPay.getPerson().getAccount(); // Annahme: Person hat ein Konto
+			CurrencyAmount amount = new CurrencyAmount(bookingToPay.getPrice(), "EUR"); // Währung hier ggf. anpassen
 
-	// Factory-Methode zur Erstellung des passenden PaymentProcessor
-	private PaymentProcessor createProcessor(PaymentType type) {
-		switch (type) {
-		case PAYPAL:
-			return new PaypalProcessor();
-		case GOOGLE_WALLET:
-			return new GoogleWalletProcessor();
-		case MOBILE_MONEY_WALLET:
-			return new MobileMoneyWalletProcessor();
-		default:
-			throw new IllegalArgumentException("Unsupported payment type: " + type);
+			// Ein Empfängerkonto (z.B. das der Firma)
+			Account receiverAccount = new Account("COMPANY_ACCOUNT", new person.structure.LegalPerson("Car Reservation Inc."), 100000);
+
+			System.out.println("Initiating payment for booking " + bookingId + "...");
+
+			// Schritt 3: Die Template Method ausführen
+			processor.processPayment(senderAccount, receiverAccount, amount);
+
+		} catch (Exception e) {
+			System.out.println("Payment failed: An unexpected error occurred. " + e.getMessage());
 		}
 	}
 }

@@ -1,12 +1,13 @@
 package person.structure;
 
 import authentication.structure.Subject;
+import payment.structure.Account;
 import authentication.structure.Credential;
 
-public abstract class Person implements Subject{
+public abstract class Person implements Subject {
 	protected final String name;
-	
 	private Credential credential;
+	private Account account;
 
 	public Credential getCredential() {
 		return this.credential;
@@ -22,6 +23,14 @@ public abstract class Person implements Subject{
 
 	public final String getName() {
 		return name;
+	}
+
+	public Account getAccount() {
+		return account;
+	}
+
+	public void setAccount(Account account) {
+		this.account = account;
 	}
 
 	@Override

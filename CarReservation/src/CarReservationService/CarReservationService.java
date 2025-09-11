@@ -6,20 +6,23 @@ import authentication.behaviour.AuthenticationClient;
 import authentication.behaviour.AuthenticationService;
 import booking.behaviour.BookingClient;
 import booking.behaviour.BookingService;
+import payment.behaviour.PaymentClient;
+import payment.behaviour.PaymentService;
 import person.behaviour.PersonClient;
 import person.behaviour.PersonService;
 import resource.behaviour.ResourceClient;
 import resource.behaviour.ResourceService;
 
 public class CarReservationService {
-	
+
 	private final PersonService personService = new PersonService();
 	private final ResourceService resourceService = new ResourceService();
 	private final AuthenticationService authService = new AuthenticationService(personService);
 	private final BookingService bookingService = new BookingService(personService, resourceService);
-	
+	private final PaymentService paymentService = new PaymentService(personService, bookingService);
+
 	private final Scanner scanner = new Scanner(System.in);
-	
+
 	public void start() {
 		while (true) {
 			System.out.println("\n=== Car Reservation Service ===");
@@ -27,9 +30,10 @@ public class CarReservationService {
 			System.out.println("2. Manage Resources");
 			System.out.println("3. Manage Authentication");
 			System.out.println("4. Manage Bookings");
-			System.out.println("5. Exit");
+			System.out.println("5. Manage Payments");
+			System.out.println("6. Exit");
 			System.out.print("Your choice: ");
-			
+
 			int choice = readInt();
 			try {
 				switch (choice) {
@@ -46,6 +50,9 @@ public class CarReservationService {
 					new BookingClient(personService, resourceService).start();
 					break;
 				case 5:
+					new PaymentClient(personService, bookingService).start();
+					break;
+				case 6:
 					System.out.println("Goodbye!");
 					return;
 				default:
@@ -56,15 +63,15 @@ public class CarReservationService {
 			}
 		}
 	}
-	
+
 	private int readInt() {
 		int v = scanner.nextInt();
 		scanner.nextLine();
 		return v;
 	}
-	
+
 	public static void main(String[] args) {
 		new CarReservationService().start();
 	}
-	
+
 }
