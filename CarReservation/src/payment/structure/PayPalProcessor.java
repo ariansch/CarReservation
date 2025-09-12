@@ -1,6 +1,6 @@
 package payment.structure;
 
-public class PaypalProcessor extends PaymentProcessor {
+public class PayPalProcessor extends PaymentProcessor {
 
 	@Override
 	protected boolean transferAmount(Account sender, Account receiver, CurrencyAmount amount) {

@@ -32,11 +32,12 @@ public class Account {
 	}
 
 	public boolean debit(double amount) {
-		if (amount > 0 && balance >= amount) {
-			balance -= amount;
-			return true;
-		}
-		return false;
+		if (amount <= 0)
+			return false;
+		if (balance + 1e-9 < amount)
+			return false; // kleine Toleranz gg. Rundungsfehler
+		balance -= amount;
+		return true;
 	}
 
 	public void credit(double amount) {
@@ -48,6 +49,20 @@ public class Account {
 	@Override
 	public String toString() {
 		return "Account No: " + accountNumber + " (Owner: " + owner.getName() + ", Balance: "
-				+ String.format("%.2f", balance) + ")";
+				+ String.format(java.util.Locale.ROOT, "%.2f", balance) + ")";
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof Account a))
+			return false;
+		return accountNumber.equals(a.accountNumber);
+	}
+
+	@Override
+	public int hashCode() {
+		return accountNumber.hashCode();
 	}
 }
