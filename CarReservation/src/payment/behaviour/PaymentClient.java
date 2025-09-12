@@ -1,243 +1,211 @@
 package payment.behaviour;
 
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Scanner;
-import java.util.Stack;
 
 import booking.behaviour.BookingService;
-import booking.structure.Booking;
 import payment.structure.Account;
-import payment.structure.CurrencyAmount;
-import payment.structure.GoogleWalletProcessor;
-import payment.structure.MobileMoneyWalletProcessor;
-import payment.structure.PaymentProcessor;
 import payment.structure.PaymentType;
-import payment.structure.PaypalProcessor;
-import person.behaviour.PersonService;
 import person.structure.Person;
+import person.structure.NaturalPerson;
+import person.structure.LegalPerson;
 import resource.behaviour.ResourceService;
+import person.behaviour.PersonService;
 
-/**
- * A standalone console client to demonstrate the functionality of the 'Payment'
- * package, following the established project style.
- */
 public class PaymentClient {
 
-	private final PersonService personService;
-	private final BookingService bookingService;
-	private final PaymentService paymentService;
-	private final History history;
-	private final Scanner scanner;
+    private final Scanner scanner = new Scanner(System.in);
 
-	/**
-	 * Defines the common interface for all command objects.
-	 */
-	private interface Command {
-		void execute();
+    // In-Memory "Repository" für Accounts (nur für Anzeige/Command)
+    private final Map<String, Account> accounts = new LinkedHashMap<>();
 
-		void undo();
-	}
+    // Command-History
+    private final Deque<Command> undo = new ArrayDeque<>();
+    private final Deque<Command> redo = new ArrayDeque<>();
 
-	/**
-	 * A concrete command for executing a payment, allowing it to be undone.
-	 */
-	private class PayCommand implements Command {
-		private final PaymentProcessor processor;
-		private final String bookingId;
-		private Account sender;
-		private Account receiver;
-		private CurrencyAmount amount;
+    private final PaymentService paymentService;
 
-		public PayCommand(PaymentProcessor processor, String bookingId) {
-			this.processor = processor;
-			this.bookingId = bookingId;
-		}
+    public PaymentClient(PaymentService paymentService, Account companyAccount) {
+        this.paymentService = paymentService;
+        // Firmenkonto sichtbar machen
+        if (companyAccount != null) {
+            accounts.put(companyAccount.getAccountNumber(), companyAccount);
+        }
+    }
 
-		@Override
-		public void execute() {
-			try {
-				Booking bookingToPay = bookingService.getBookingById(bookingId);
-				if (bookingToPay == null) {
-					System.out.println("Payment failed: Booking with ID '" + bookingId + "' not found.");
-					return;
-				}
+    // ===== Menü =====
+    public void start() {
+        boolean running = true;
+        while (running) {
+            printMenu();
+            String choice = scanner.nextLine().trim();
+            switch (choice) {
+                case "1" -> createAccount();
+                case "2" -> deleteAccount();
+                case "3" -> listAccounts();
+                case "4" -> payBooking();
+                case "5" -> doUndo();
+                case "6" -> doRedo();
+                case "0" -> {
+                    System.out.println("Zurück zum Hauptmenü.");
+                    running = false;
+                }
+                default -> System.out.println("Ungültige Eingabe.");
+            }
+        }
+    }
 
-				this.sender = bookingToPay.getPerson().getAccount();
-				this.amount = new CurrencyAmount(bookingToPay.getPrice(), "EUR");
+    private void printMenu() {
+        System.out.println("\n--- Payment Menu ---");
+        System.out.println("1) Daten eingeben (Account anlegen)");
+        System.out.println("2) Daten löschen (Account entfernen)");
+        System.out.println("3) Daten ausgeben (Accounts anzeigen)");
+        System.out.println("4) Payment ausführen (per Booking-ID)");
+        System.out.println("5) Undo");
+        System.out.println("6) Redo");
+        System.out.println("0) Zurück");
+        System.out.print("Auswahl: ");
+    }
 
-				// Create a dummy receiver account for the simulation
-				this.receiver = new Account("COMPANY_ACCOUNT_01",
-						new person.structure.LegalPerson("Car Reservation Inc."), 100000);
+    // ===== Command-Infrastruktur =====
+    private interface Command {
+        void execute();
+        void undo();
+    }
 
-				processor.processPayment(sender, receiver, amount);
-			} catch (Exception e) {
-				System.out.println("Payment failed during execution: " + e.getMessage());
-			}
-		}
+    private class CreateAccountCommand implements Command {
+        private final Account account;
+        CreateAccountCommand(Account acc) { this.account = acc; }
+        @Override public void execute() { accounts.put(account.getAccountNumber(), account); }
+        @Override public void undo() { accounts.remove(account.getAccountNumber()); }
+    }
 
-		@Override
-		public void undo() {
-			if (sender != null && receiver != null && amount != null) {
-				System.out.println("\n--- Undoing Payment for Booking ID: " + bookingId + " ---");
-				// Reverse the transaction
-				receiver.debit(amount.getAmount());
-				sender.credit(amount.getAmount());
-				System.out.println("=> Payment successfully reverted.");
-				System.out.println("--- Undo Finished ---");
-			}
-		}
-	}
+    private class DeleteAccountCommand implements Command {
+        private final String accountNo;
+        private Account removed;
+        DeleteAccountCommand(String accountNo) { this.accountNo = accountNo; }
+        @Override public void execute() { removed = accounts.remove(accountNo); }
+        @Override public void undo() { if (removed != null) accounts.put(accountNo, removed); }
+    }
 
-	/**
-	 * Manages a history of executed commands to support undo and redo.
-	 */
-	private static class History {
-		private final Stack<Command> undoStack = new Stack<>();
-		private final Stack<Command> redoStack = new Stack<>();
+    private void doCmd(Command c) {
+        c.execute();
+        undo.push(c);
+        redo.clear();
+    }
 
-		public void execute(Command cmd) {
-			cmd.execute();
-			undoStack.push(cmd);
-			redoStack.clear();
-		}
+    private void doUndo() {
+        if (undo.isEmpty()) {
+            System.out.println("Nichts zum Rückgängig machen.");
+            return;
+        }
+        Command c = undo.pop();
+        c.undo();
+        redo.push(c);
+        System.out.println("Undo ausgeführt.");
+    }
 
-		public void undo() {
-			if (!undoStack.isEmpty()) {
-				Command cmd = undoStack.pop();
-				cmd.undo();
-				redoStack.push(cmd);
-			} else {
-				System.out.println("Nothing to undo.");
-			}
-		}
+    private void doRedo() {
+        if (redo.isEmpty()) {
+            System.out.println("Nichts zum Wiederholen.");
+            return;
+        }
+        Command c = redo.pop();
+        c.execute();
+        undo.push(c);
+        System.out.println("Redo ausgeführt.");
+    }
 
-		public void redo() {
-			if (!redoStack.isEmpty()) {
-				Command cmd = redoStack.pop();
-				cmd.execute();
-				undoStack.push(cmd);
-			} else {
-				System.out.println("Nothing to redo.");
-			}
-		}
-	}
+    // ===== Menü-Aktionen =====
+    private void createAccount() {
+        System.out.print("Neue Account-Nr: ");
+        String no = scanner.nextLine().trim();
+        if (no.isEmpty() || accounts.containsKey(no)) {
+            System.out.println("Abgebrochen (leer oder existiert).");
+            return;
+        }
 
-	public PaymentClient(PersonService personService, BookingService bookingService) {
-		this.personService = personService;
-		this.bookingService = bookingService;
-		this.paymentService = new PaymentService(personService, bookingService);
-		this.history = new History();
-		this.scanner = new Scanner(System.in);
-	}
+        System.out.print("Owner-Typ [N=Natural, L=Legal]: ");
+        String t = scanner.nextLine().trim().toUpperCase();
+        System.out.print("Owner-Name: ");
+        String name = scanner.nextLine().trim();
+        if (name.isEmpty()) {
+            System.out.println("Abgebrochen (leerer Name).");
+            return;
+        }
 
-	public void start() {
-		while (true) {
-			printMenu();
-			try {
-				int choice = Integer.parseInt(scanner.nextLine());
-				if (choice == 6) {
-					System.out.println("Exiting Payment Menu...");
-					break;
-				}
-				handleMenuChoice(choice);
-			} catch (Exception e) {
-				System.out.println("An error occurred: " + e.getMessage());
-			}
-		}
-	}
+        Person owner = "L".equals(t) ? new LegalPerson(name) : new NaturalPerson(name);
 
-	private void printMenu() {
-		System.out.println("\n--- Payment Paket-Menü ---");
-		System.out.println("1. Daten eingeben (Make a Payment)");
-		System.out.println("2. Daten löschen");
-		System.out.println("3. Daten ausgeben (List Accounts)");
-		System.out.println("4. Undo");
-		System.out.println("5. Redo");
-		System.out.println("6. Exit");
-		System.out.print("Ihre Wahl: ");
-	}
+        System.out.print("Startguthaben: ");
+        double bal;
+        try {
+            bal = Double.parseDouble(scanner.nextLine().trim());
+            if (bal < 0) {
+                System.out.println("Negatives Guthaben nicht erlaubt.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Ungültiger Betrag.");
+            return;
+        }
 
-	private void handleMenuChoice(int choice) {
-		switch (choice) {
-		case 1:
-			createPayment();
-			break;
-		case 2:
-			System.out.println("Payments cannot be deleted directly. Please use 'Undo' to revert a payment.");
-			break;
-		case 3:
-			listAccounts();
-			break;
-		case 4:
-			history.undo();
-			break;
-		case 5:
-			history.redo();
-			break;
-		default:
-			System.out.println("Invalid input. Please try again.");
-			break;
-		}
-	}
+        Account acc = new Account(no, owner, bal);
+        doCmd(new CreateAccountCommand(acc));
+        System.out.println("Account angelegt: " + acc);
+    }
 
-	private void createPayment() {
-		System.out.println("\n--- Make a Payment ---");
-		bookingService.listBookings();
-		System.out.print("Enter the Booking ID to pay for: ");
-		String bookingId = scanner.nextLine();
+    private void deleteAccount() {
+        System.out.print("Account-Nr löschen: ");
+        String no = scanner.nextLine().trim();
+        if (!accounts.containsKey(no)) {
+            System.out.println("Nicht gefunden.");
+            return;
+        }
+        doCmd(new DeleteAccountCommand(no));
+        System.out.println("Account gelöscht: " + no);
+    }
 
-		System.out.println("Select a payment method: 1=PayPal, 2=Google Wallet, 3=Mobile Money");
-		System.out.print("Your choice: ");
-		int processorChoice = Integer.parseInt(scanner.nextLine());
+    private void listAccounts() {
+        if (accounts.isEmpty()) {
+            System.out.println("(keine Accounts)");
+            return;
+        }
+        accounts.values().forEach(a -> System.out.println(" - " + a));
+    }
 
-		PaymentProcessor processor;
-		switch (processorChoice) {
-		case 1:
-			processor = new PaypalProcessor();
-			break;
-		case 2:
-			processor = new GoogleWalletProcessor();
-			break;
-		case 3:
-			processor = new MobileMoneyWalletProcessor();
-			break;
-		default:
-			System.out.println("Invalid payment method.");
-			return;
-		}
+    private void payBooking() {
+        System.out.print("Booking-ID: ");
+        String bookingId = scanner.nextLine().trim();
+        PaymentType type = askPaymentType();
+        boolean ok = paymentService.payBookingById(bookingId, type);
+        System.out.println(ok ? "Zahlung erfolgreich." : "Zahlung fehlgeschlagen.");
+    }
 
-		history.execute(new PayCommand(processor, bookingId));
-	}
+    private PaymentType askPaymentType() {
+        System.out.println("Zahlmethode:");
+        System.out.println(" 1) PAYPAL");
+        System.out.println(" 2) GOOGLE_WALLET");
+        System.out.println(" 3) MOBILE_MONEY_WALLET");
+        System.out.print("Auswahl: ");
+        String c = scanner.nextLine().trim();
+        return switch (c) {
+            case "1" -> PaymentType.PAYPAL;
+            case "2" -> PaymentType.GOOGLE_WALLET;
+            case "3" -> PaymentType.MOBILE_MONEY_WALLET;
+            default -> {
+                System.out.println("Ungültig – nehme PAYPAL.");
+                yield PaymentType.PAYPAL;
+            }
+        };
+    }
 
-	private void listAccounts() {
-		System.out.println("\n--- Account Balances ---");
-		List<Person> persons = personService.getAllPersons();
-		if (persons.isEmpty()) {
-			System.out.println("No persons available to display accounts for.");
-			return;
-		}
-		for (Person p : persons) {
-			if (p.getAccount() != null) {
-				System.out.println("- " + p.getAccount().toString());
-			} else {
-				System.out.println("- " + p.getName() + " (No account created yet)");
-			}
-		}
-	}
-
-	public static void main(String[] args) {
-		// Setup for standalone testing
-		PersonService personService = new PersonService();
-		ResourceService resourceService = new ResourceService();
-		BookingService bookingService = new BookingService(personService, resourceService);
-
-		// Create dummy data
-		personService.createPerson("natural", "Ari");
-		personService.findPersonByName("Ari")
-				.setAccount(new Account("A001", personService.findPersonByName("Ari"), 2000));
-		resourceService.addResource(new resource.structure.Car("Tesla Model 3", 45000));
-		bookingService.createBooking("DE", "B01", "Ari", "Tesla Model 3", 150.50);
-
-		new PaymentClient(personService, bookingService).start();
-	}
+    public static void main(String[] args) {
+        BookingService bookingService = new BookingService(new PersonService(), new ResourceService());
+        PaymentService paymentService = new PaymentService(bookingService);
+        Account companyAcc = paymentService.getCompanyAccount(); // Konto direkt aus dem Service
+        new PaymentClient(paymentService, companyAcc).start();
+    }
 }

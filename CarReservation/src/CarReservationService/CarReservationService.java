@@ -19,7 +19,7 @@ public class CarReservationService {
 	private final ResourceService resourceService = new ResourceService();
 	private final AuthenticationService authService = new AuthenticationService(personService);
 	private final BookingService bookingService = new BookingService(personService, resourceService);
-	private final PaymentService paymentService = new PaymentService(personService, bookingService);
+	private final PaymentService paymentService = new PaymentService(bookingService);
 
 	private final Scanner scanner = new Scanner(System.in);
 
@@ -50,7 +50,7 @@ public class CarReservationService {
 					new BookingClient(personService, resourceService).start();
 					break;
 				case 5:
-					new PaymentClient(personService, bookingService).start();
+					new PaymentClient(paymentService, paymentService.getCompanyAccount()).start();
 					break;
 				case 6:
 					System.out.println("Goodbye!");
