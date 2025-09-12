@@ -51,7 +51,7 @@ public class PersonClient {
 		}
 		
 		public void undo() {
-			svc.createPerson(snapType, name);
+			svc.createPerson(snapType, snapName);
 		}
 	}
 	
