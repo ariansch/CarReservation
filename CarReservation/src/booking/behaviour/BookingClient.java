@@ -119,6 +119,14 @@ public class BookingClient {
 		this.personService = personService;
 		this.resourceService = resourceService;
 		this.bookingSrvce = new BookingService(personService, resourceService);
+		
+	
+	}
+	
+	public BookingClient(BookingService bookingService) { 
+		this.personService = null;
+		this.resourceService = null;
+		this.bookingSrvce = bookingService;
 	}
 
 	public void start() {

@@ -1,41 +1,51 @@
 package payment.behaviour;
 
-import booking.behaviour.BookingService; // falls ihr das so nutzt
-import booking.structure.Booking; // besser nur structure importieren
-import payment.structure.*;
-import person.structure.LegalPerson;
+import booking.behaviour.BookingService;
+import booking.structure.Booking;
+import payment.structure.Account;
+import payment.structure.CurrencyAmount;
+import payment.structure.PaymentProcessor;
+import person.behaviour.PersonService;
 
 public class PaymentService {
 
+	private final PersonService personService;
 	private final BookingService bookingService;
-	private final Account companyAccount; // Account der Firma, die Zahlungen empfängt
 
-	public PaymentService(BookingService bookingService) {
+	public PaymentService(PersonService personService, BookingService bookingService) {
+		this.personService = personService;
 		this.bookingService = bookingService;
-		this.companyAccount = new Account("COMPANY_ACC_001", new LegalPerson("CarReservation GmbH"), 0.0);
 	}
 
-	public boolean payBookingById(String bookingId, PaymentType type) {
-		Booking b = bookingService.getBookingById(bookingId);
-		if (b == null) {
-			System.out.println("Payment failed: booking not found: " + bookingId);
-			return false;
+	public void payAmount(PaymentProcessor processor, String bookingId) {
+		try {
+			// Schritt 1: Die zugehörige Buchung über den BookingService finden
+			Booking bookingToPay = bookingService.getBookingById(bookingId);
+			if (bookingToPay == null) {
+				System.out.println("Payment failed: Booking with ID '" + bookingId + "' not found.");
+				return;
+			}
+
+			// Schritt 2: Benötigte Daten aus der Buchung extrahieren
+			Account senderAccount = (bookingToPay.getPerson() != null) ? bookingToPay.getPerson().getAccount() : null;
+			if (senderAccount == null) {
+				System.out.println("Payment failed: Sender account not found for '" + bookingToPay.getPerson().getName() + "'.");
+				return;
+			}
+
+			CurrencyAmount amount = new CurrencyAmount(bookingToPay.getPrice(), "EUR"); // Währung hier ggf. anpassen
+
+			// Ein Empfängerkonto (z.B. das der Firma)
+			Account receiverAccount = new Account("COMPANY_ACCOUNT",
+					new person.structure.LegalPerson("Car Reservation Inc."), 100000);
+
+			System.out.println("Initiating payment for booking " + bookingId + "...");
+
+			// Schritt 3: Die Template Method ausführen
+			processor.processPayment(senderAccount, receiverAccount, amount);
+
+		} catch (Exception e) {
+			System.out.println("Payment failed: An unexpected error occurred. " + e.getMessage());
 		}
-
-		Account sender = b.getPerson().getAccount();
-		Account receiver = companyAccount;
-		CurrencyAmount amount = new CurrencyAmount(b.getPrice(), "EUR"); // ggf. aus Sprache ableiten
-
-		PaymentProcessor p = switch (type) {
-		case PAYPAL -> new PayPalProcessor();
-		case GOOGLE_WALLET -> new GoogleWalletProcessor();
-		case MOBILE_MONEY_WALLET -> new MobileMoneyWalletProcessor();
-		};
-
-		return p.processPayment(sender, receiver, amount);
-	}
-
-	public Account getCompanyAccount() {
-		return companyAccount;
 	}
 }
