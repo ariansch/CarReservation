@@ -27,11 +27,17 @@ public class PaymentService {
 			}
 
 			// Schritt 2: Benötigte Daten aus der Buchung extrahieren
-			Account senderAccount = bookingToPay.getPerson().getAccount(); // Annahme: Person hat ein Konto
+			Account senderAccount = (bookingToPay.getPerson() != null) ? bookingToPay.getPerson().getAccount() : null;
+			if (senderAccount == null) {
+				System.out.println("Payment failed: Sender account not found for '" + bookingToPay.getPerson().getName() + "'.");
+				return;
+			}
+
 			CurrencyAmount amount = new CurrencyAmount(bookingToPay.getPrice(), "EUR"); // Währung hier ggf. anpassen
 
 			// Ein Empfängerkonto (z.B. das der Firma)
-			Account receiverAccount = new Account("COMPANY_ACCOUNT", new person.structure.LegalPerson("Car Reservation Inc."), 100000);
+			Account receiverAccount = new Account("COMPANY_ACCOUNT",
+					new person.structure.LegalPerson("Car Reservation Inc."), 100000);
 
 			System.out.println("Initiating payment for booking " + bookingId + "...");
 

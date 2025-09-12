@@ -34,7 +34,6 @@ public class PaymentClient {
 	 */
 	private interface Command {
 		void execute();
-
 		void undo();
 	}
 
@@ -62,7 +61,12 @@ public class PaymentClient {
 					return;
 				}
 
-				this.sender = bookingToPay.getPerson().getAccount();
+				this.sender = (bookingToPay.getPerson() != null) ? bookingToPay.getPerson().getAccount() : null;
+				if (this.sender == null) {
+					System.out.println("Payment failed: Sender account not found for '" + bookingToPay.getPerson().getName() + "'.");
+					return;
+				}
+
 				this.amount = new CurrencyAmount(bookingToPay.getPrice(), "EUR");
 
 				// Create a dummy receiver account for the simulation
@@ -84,6 +88,58 @@ public class PaymentClient {
 				sender.credit(amount.getAmount());
 				System.out.println("=> Payment successfully reverted.");
 				System.out.println("--- Undo Finished ---");
+			}
+		}
+	}
+
+	/**
+	 * Command: Create or top up an account for a person (undoable).
+	 * - If no account exists: create with given id and initial balance.
+	 * - If account exists: credit the given amount.
+	 * Undo:
+	 * - If created: remove account (set to null).
+	 * - If topped up: debit the credited amount.
+	 */
+	private class CreateOrTopUpAccountCommand implements Command {
+		private final String personName;
+		private final String accountId;
+		private final double amount;
+		private boolean createdNew = false;
+
+		public CreateOrTopUpAccountCommand(String personName, String accountId, double amount) {
+			this.personName = personName;
+			this.accountId = accountId;
+			this.amount = amount;
+		}
+
+		@Override
+		public void execute() {
+			Person p = personService.findPersonByName(personName);
+			if (p == null) {
+				System.out.println("Person not found: " + personName);
+				return;
+			}
+			Account acc = p.getAccount();
+			if (acc == null) {
+				acc = new Account(accountId, p, amount);
+				p.setAccount(acc);
+				createdNew = true;
+			} else {
+				if (amount > 0) acc.credit(amount);
+			}
+		}
+
+		@Override
+		public void undo() {
+			Person p = personService.findPersonByName(personName);
+			if (p == null) return;
+			Account acc = p.getAccount();
+			if (createdNew) {
+				// remove created account
+				p.setAccount(null);
+			} else if (acc != null && amount > 0) {
+				// revert top-up
+				acc.debit(amount);
 			}
 		}
 	}
@@ -154,6 +210,8 @@ public class PaymentClient {
 		System.out.println("4. Undo");
 		System.out.println("5. Redo");
 		System.out.println("6. Exit");
+		// zusätzliche Option, aber bestehende Strings 1–6 bleiben unverändert
+		System.out.println("7. Create or Top up Account");
 		System.out.print("Ihre Wahl: ");
 	}
 
@@ -173,6 +231,9 @@ public class PaymentClient {
 			break;
 		case 5:
 			history.redo();
+			break;
+		case 7:
+			createOrTopUpAccount();
 			break;
 		default:
 			System.out.println("Invalid input. Please try again.");
@@ -207,6 +268,30 @@ public class PaymentClient {
 		}
 
 		history.execute(new PayCommand(processor, bookingId));
+	}
+
+	private void createOrTopUpAccount() {
+		System.out.println("\n--- Create or Top Up Account ---");
+		System.out.print("Enter person name: ");
+		String personName = scanner.nextLine().trim();
+
+		Person p = personService.findPersonByName(personName);
+		if (p == null) {
+			System.out.println("Person not found: " + personName);
+			return;
+		}
+
+		if (p.getAccount() == null) {
+			System.out.print("Enter new account id: ");
+			String accId = scanner.nextLine().trim();
+			System.out.print("Enter initial balance (>=0): ");
+			double amount = Double.parseDouble(scanner.nextLine());
+			history.execute(new CreateOrTopUpAccountCommand(personName, accId, amount));
+		} else {
+			System.out.print("Enter top-up amount (>=0): ");
+			double amount = Double.parseDouble(scanner.nextLine());
+			history.execute(new CreateOrTopUpAccountCommand(personName, p.getAccount().getAccountNumber(), amount));
+		}
 	}
 
 	private void listAccounts() {
