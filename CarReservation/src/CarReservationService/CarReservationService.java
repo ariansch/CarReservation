@@ -58,13 +58,14 @@ public class CarReservationService {
 					new BookingClient(bookingService).start();
 					break;
 				case 5:
-					new PaymentClient(paymentService, paymentService.getCompanyAccount()).start();
+					new PaymentClient(paymentService, paymentService.getCompanyAccount(), personService).start();
 					break;
 				case 6:
 					new ContentClient(contentService).start();
 					break;
 				case 7:
 					new StatisticsClient(bookingService, statisticsService).start();
+					break;
 				case 8:
 					System.out.println("Goodbye!");
 					return;
