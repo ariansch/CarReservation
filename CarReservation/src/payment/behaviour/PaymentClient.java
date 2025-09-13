@@ -13,6 +13,7 @@ import person.structure.Person;
 import person.structure.NaturalPerson;
 import person.structure.LegalPerson;
 import resource.behaviour.ResourceService;
+import statistics.behaviour.StatisticsRepository;
 import person.behaviour.PersonService;
 
 public class PaymentClient {
@@ -226,6 +227,11 @@ public class PaymentClient {
 		String bookingId = scanner.nextLine().trim();
 		PaymentType type = askPaymentType();
 		boolean ok = paymentService.payBookingById(bookingId, type);
+		
+		if (ok) {
+			StatisticsRepository.recordPayment(bookingId, type);
+		}
+		
 		System.out.println(ok ? "Payment successful." : "Payment failed.");
 	}
 

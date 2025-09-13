@@ -110,7 +110,6 @@ public class ContentClient {
         }
     }
 
-    /* ===================== Client State ===================== */
 
     private final ContentService contentService;
     private final History history = new History();
@@ -122,12 +121,14 @@ public class ContentClient {
 
     public void start() {
         while (true) {
+        	System.out.println("\n--- Content Paket-Menü ---");
             System.out.println("1. Daten eingeben");
             System.out.println("2. Daten löschen");
             System.out.println("3. Daten ausgeben");
             System.out.println("4. Undo");
             System.out.println("5. Redo");
             System.out.println("6. Exit");
+            System.out.print("Ihre Wahl: ");
 
             String choice = scanner.nextLine().trim();
             try {

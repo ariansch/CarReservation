@@ -1,14 +1,15 @@
 package content.behaviour;
 
-import content.structure.Content;
-import content.structure.File;
-import content.structure.Folder;
-
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Month;
 import java.time.Year;
 import java.time.YearMonth;
 import java.util.Objects;
+
+import content.structure.Content;
+import content.structure.File;
+import content.structure.Folder;
 
 public class ContentService {
 
@@ -16,53 +17,61 @@ public class ContentService {
 
     public Folder getRoot() { return root; }
 
-    public void addBookingRecord(Year year, Month month, String name, BigDecimal amount) {
+  
+    public File addBookingRecord(Year year, Month month, String name, BigDecimal amount) {
         Objects.requireNonNull(year, "year");
         Objects.requireNonNull(month, "month");
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(amount, "amount");
 
         Folder monthFolder = getOrCreateMonthFolder(year, month);
-        monthFolder.add(File.bookingRecord(name, amount, "Booking: " + name + " = " + amount));
+        File f = File.bookingRecord(name, amount, "Booking: " + name + " = " + fmt(amount));
+        monthFolder.add(f);
+
         rebuildMonthlySummary(year, month);
         rebuildYearlySummary(year);
+        return f;
     }
 
-    public void addPaymentRecord(Year year, Month month, String name, BigDecimal amount) {
+
+    public File addPaymentRecord(Year year, Month month, String name, BigDecimal amount) {
         Objects.requireNonNull(year, "year");
         Objects.requireNonNull(month, "month");
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(amount, "amount");
 
         Folder monthFolder = getOrCreateMonthFolder(year, month);
-        monthFolder.add(File.paymentRecord(name, amount, "Payment: " + name + " = " + amount));
+        File f = File.paymentRecord(name, amount, "Payment: " + name + " = " + fmt(amount));
+        monthFolder.add(f);
+
         rebuildMonthlySummary(year, month);
         rebuildYearlySummary(year);
+        return f;
     }
 
+   
     public File removeRecord(Year year, Month month, String name) {
         Objects.requireNonNull(year, "year");
         Objects.requireNonNull(month, "month");
         Objects.requireNonNull(name, "name");
 
         Folder monthFolder = getOrCreateMonthFolder(year, month);
-        File target = findFileByName(monthFolder, name);
-        if (target == null) {
-            return null;
+
+        Content toRemove = monthFolder.getChildren().stream()
+                .filter(c -> c instanceof File && name.equals(c.getName()))
+                .findFirst()
+                .orElse(null);
+
+        if (toRemove == null) {
+            throw new IllegalArgumentException("No file named '" + name + "' found in " + year + "/" + month);
         }
-        monthFolder.remove(target);
+
+        monthFolder.remove(toRemove);
+
         rebuildMonthlySummary(year, month);
         rebuildYearlySummary(year);
-
-        return new File(
-                target.getName(),
-                "text/plain",
-                target.getPayload(),
-                target.getBookingTotal(),
-                target.getPaymentTotal()
-        );
+        return (File) toRemove;
     }
-
 
     public String printTree() {
         return root.printTree();
@@ -73,39 +82,20 @@ public class ContentService {
     private Folder getOrCreateYearFolder(Year year) {
         String y = String.valueOf(year.getValue());
         return root.getChildren().stream()
-                .filter(Folder.class::isInstance)
-                .map(Folder.class::cast)
+                .filter(Folder.class::isInstance).map(Folder.class::cast)
                 .filter(f -> f.getName().equals(y))
                 .findFirst()
-                .orElseGet(() -> {
-                    Folder f = new Folder(y);
-                    root.add(f);
-                    return f;
-                });
+                .orElseGet(() -> { Folder f = new Folder(y); root.add(f); return f; });
     }
 
     private Folder getOrCreateMonthFolder(Year year, Month month) {
         Folder yearFolder = getOrCreateYearFolder(year);
         String m = String.format("%02d-%s", month.getValue(), month.name());
         return yearFolder.getChildren().stream()
-                .filter(Folder.class::isInstance)
-                .map(Folder.class::cast)
+                .filter(Folder.class::isInstance).map(Folder.class::cast)
                 .filter(f -> f.getName().equals(m))
                 .findFirst()
-                .orElseGet(() -> {
-                    Folder f = new Folder(m);
-                    yearFolder.add(f);
-                    return f;
-                });
-    }
-
-    private static File findFileByName(Folder monthFolder, String name) {
-        for (Content c : monthFolder.getChildren()) {
-            if (c instanceof File f && f.getName().equals(name)) {
-                return f;
-            }
-        }
-        return null;
+                .orElseGet(() -> { Folder f = new Folder(m); yearFolder.add(f); return f; });
     }
 
     private void rebuildMonthlySummary(Year year, Month month) {
@@ -113,19 +103,20 @@ public class ContentService {
         YearMonth ym = YearMonth.of(year.getValue(), month);
         String summaryName = ym + "-SUMMARY.txt";
 
-        File old = findFileByName(monthFolder, summaryName);
-        if (old != null) {
-            monthFolder.remove(old);
-        }
+        // Alte Monats-Summary entfernen
+        monthFolder.getChildren().stream()
+                .filter(c -> c instanceof File && c.getName().equals(summaryName))
+                .findFirst()
+                .ifPresent(monthFolder::remove);
 
+        // Summen nach Entfernen berechnen
         BigDecimal sumB = monthFolder.getBookingTotal();
         BigDecimal sumP = monthFolder.getPaymentTotal();
 
-        File summary = File.summary(
-                summaryName,
-                sumB, sumP,
-                "Summary " + ym + " | Bookings=" + sumB + ", Payments=" + sumP
-        );
+      
+        String payload = "Monatsübersicht " + ym + " — Buchungen=" + fmt(sumB) + " | Zahlungen=" + fmt(sumP);
+
+        File summary = File.summary(summaryName, sumB, sumP, payload);
         monthFolder.add(summary);
     }
 
@@ -133,24 +124,23 @@ public class ContentService {
         Folder yearFolder = getOrCreateYearFolder(year);
         String summaryName = year + "-SUMMARY.txt";
 
-        File toRemove = null;
-        for (Content c : yearFolder.getChildren()) {
-            if (c instanceof File f && f.getName().equals(summaryName)) {
-                toRemove = f; break;
-            }
-        }
-        if (toRemove != null) {
-            yearFolder.remove(toRemove);
-        }
+        // Alte Jahres-Summary entfernen
+        yearFolder.getChildren().stream()
+                .filter(c -> c instanceof File && c.getName().equals(summaryName))
+                .findFirst()
+                .ifPresent(yearFolder::remove);
 
         BigDecimal sumB = yearFolder.getBookingTotal();
         BigDecimal sumP = yearFolder.getPaymentTotal();
 
-        File summary = File.summary(
-                summaryName,
-                sumB, sumP,
-                "Yearly summary " + year + " | Bookings=" + sumB + ", Payments=" + sumP
-        );
+      
+        String payload = "Jahresübersicht " + year + " — Buchungen=" + fmt(sumB) + " | Zahlungen=" + fmt(sumP);
+
+        File summary = File.summary(summaryName, sumB, sumP, payload);
         yearFolder.add(summary);
+    }
+
+    private static String fmt(BigDecimal x) {
+        return (x == null ? "0.00" : x.setScale(2, RoundingMode.HALF_UP).toPlainString());
     }
 }

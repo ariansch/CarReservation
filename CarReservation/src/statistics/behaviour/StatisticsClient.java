@@ -116,6 +116,7 @@ public class StatisticsClient {
 
 	public void start() {
 		while (true) {
+			System.out.println("\n--- Statistics Menu ---");
 			System.out.println("1. Auswahl tätigen");
 			System.out.println("2. Auswahl löschen");
 			System.out.println("3. Ergebnisse anzeigen");
@@ -148,7 +149,7 @@ public class StatisticsClient {
 						System.out.println("Nothing to redo.");
 					break;
 				case "6":
-					System.out.println("Exiting ");
+					System.out.println("Existing ");
 					return;
 				default:
 					System.out.println("Invalid option. Please try again.");
@@ -188,28 +189,37 @@ public class StatisticsClient {
 		System.out.println("Auswahl gelöscht.");
 	}
 
-	private void showResults() {
-		List<Booking> de = statisticsService.filterGerman(selection);
-		List<Booking> en = statisticsService.filterEnglish(selection);
-		StatisticsService.Result res = statisticsService.compute(selection);
+	 private void showResults() {
+	        List<Booking> de = statisticsService.filterGerman(selection);
+	        List<Booking> en = statisticsService.filterEnglish(selection);
+	        StatisticsService.Result res = statisticsService.compute(selection);
 
+	        System.out.println("Deutsche Buchungen:");
+	        if (de.isEmpty()) System.out.println("- keine deutschen Buchungen -");
+	        else for (Booking b : de) System.out.println("- " + b.getBookingId());
 
-		System.out.println("Deutsche Buchungen:");
-		if (de.isEmpty())
-			System.out.println("- keine deutschen Buchungen -");
-		else
-			for (Booking b : de)
-				System.out.println("- " + b.getBookingId());
+	        System.out.println("Englische Buchungen:");
+	        if (en.isEmpty()) System.out.println("- keine englischen Buchungen -");
+	        else for (Booking b : en) System.out.println("- " + b.getBookingId());
 
-		System.out.println("Englische Buchungen:");
-		if (en.isEmpty())
-			System.out.println("- keine englischen Buchungen -");
-		else
-			for (Booking b : en)
-				System.out.println("- " + b.getBookingId());
+	        System.out.println("Summe und Anzahl:");
+	        System.out.println("DE -- count=" + res.getGermanCount() + ", total=" + res.getGermanTotal());
+	        System.out.println("EN -- count=" + res.getEnglishCount() + ", total=" + res.getEnglishTotal());
 
-		System.out.println("Summe und Anzahl:");
-		System.out.println("DE -- count=" + res.getGermanCount() + ", total=" + res.getGermanTotal());
-		System.out.println("EN -- count=" + res.getEnglishCount() + ", total=" + res.getEnglishTotal());
+	      
+	        System.out.println("Nach Zahlungsart:");
+	        var dePP = statisticsService.getGermanBookingsPaidByPayPal(selection);
+	        var deGW = statisticsService.getGermanBookingsPaidByGoogleWallet(selection);
+	        var deMM = statisticsService.getGermanBookingsPaidByMoneyWallet(selection);
+	        var enPP = statisticsService.getEnglishBookingsPaidByPayPal(selection);
+	        var enGW = statisticsService.getEnglishBookingsPaidByGoogleWallet(selection);
+	        var enMM = statisticsService.getEnglishBookingsPaidByMoneyWallet(selection);
+
+	        System.out.println("DE via PayPal: " + dePP.size());
+	        System.out.println("DE via GoogleWallet: " + deGW.size());
+	        System.out.println("DE via MoneyWallet: " + deMM.size());
+	        System.out.println("EN via PayPal: " + enPP.size());
+	        System.out.println("EN via GoogleWallet: " + enGW.size());
+	        System.out.println("EN via MoneyWallet: " + enMM.size());
+	    }
 	}
-}
