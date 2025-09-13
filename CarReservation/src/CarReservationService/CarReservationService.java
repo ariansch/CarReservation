@@ -36,7 +36,7 @@ public class CarReservationService {
 			System.out.println("2. Manage Resources");
 			System.out.println("3. Manage Authentication");
 			System.out.println("4. Manage Bookings");
-			System.out.println("5. Manage Payments");;
+			System.out.println("5. Manage Payments");
 			System.out.println("6. Manage Content");
 			System.out.println("7. Manage Statistics");
 			System.out.println("8. Exit");
