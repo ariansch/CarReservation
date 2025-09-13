@@ -47,7 +47,7 @@ public class PaymentClient {
 			case "4" -> payBooking();
 			case "5" -> doUndo();
 			case "6" -> doRedo();
-			case "0" -> {
+			case "7" -> {
 				System.out.println("Back to Main Menu...");
 				running = false;
 			}
@@ -64,7 +64,7 @@ public class PaymentClient {
 		System.out.println("4) Execute payment (by Booking ID)");
 		System.out.println("5) Undo");
 		System.out.println("6) Redo");
-		System.out.println("0) Back to Main Menu");
+		System.out.println("7) Back to Main Menu");
 		System.out.print("Your choice: ");
 	}
 
