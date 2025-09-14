@@ -10,7 +10,7 @@ public final class GermanBooking extends Booking {
 	
 	@Override
 	public String header() {
-		return "Buchungsbestätigung:" + getBookingId();
+		return "Buchungsbestätigung: " + getBookingId();
 	}
 	
 	@Override
