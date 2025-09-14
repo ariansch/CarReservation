@@ -9,9 +9,6 @@ import java.util.Scanner;
 import booking.behaviour.BookingService;
 import payment.structure.Account;
 import payment.structure.PaymentType;
-import person.structure.Person;
-import person.structure.NaturalPerson;
-import person.structure.LegalPerson;
 import resource.behaviour.ResourceService;
 import statistics.behaviour.StatisticsRepository;
 import person.behaviour.PersonService;
@@ -52,7 +49,7 @@ public class PaymentClient {
 				System.out.println("Back to Main Menu...");
 				running = false;
 			}
-			default -> System.out.println("Invaild input.");
+			default -> System.out.println("Invalid input.");
 			}
 		}
 	}
@@ -227,11 +224,11 @@ public class PaymentClient {
 		String bookingId = scanner.nextLine().trim();
 		PaymentType type = askPaymentType();
 		boolean ok = paymentService.payBookingById(bookingId, type);
-		
+
 		if (ok) {
 			StatisticsRepository.recordPayment(bookingId, type);
 		}
-		
+
 		System.out.println(ok ? "Payment successful." : "Payment failed.");
 	}
 
