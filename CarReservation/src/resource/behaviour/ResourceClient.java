@@ -52,8 +52,8 @@ public class ResourceClient {
 	}
 	
 	private static final class History {
-		private final Command[] undo = new Command[200];
-		private final Command[] redo = new Command [200];
+		private final Command[] undo = new Command[10];
+		private final Command[] redo = new Command [10];
 		private int uTop = 0, rTop = 0;
 		void execute(Command cmd) {
 			cmd.execute();

@@ -19,11 +19,12 @@ public class BookingService {
 		this.resourceService = resourceService;
 	}
 	
-	public void createBooking(String language, String bookingId, String personName, String resourceName, double price) {
+	public void createBooking(String language, String bookingId, String personName, String resourceName) {
 		var person = personService.findPersonByName(personName);
 		var resource = resourceService.getSelectedResource(resourceName);
 		
 		var lang = "EN".equalsIgnoreCase(language) ? Lang.EN : Lang.DE;
+		double price = resource.getPrice();
 		
 		BookingBuilder builder = new BookingBuilder()
 				.id(bookingId)

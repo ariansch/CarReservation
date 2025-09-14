@@ -20,20 +20,18 @@ public class BookingClient {
 		private final String bookingId;
 		private final String personName;
 		private final String resourceName;
-		private final double price;
 
 		public CreateCommand(BookingService bookingService, String language, String bookingId, String personName,
-				String resourceName, double price) {
+				String resourceName) {
 			this.bookingService = bookingService;
 			this.language = language;
 			this.bookingId = bookingId;
 			this.personName = personName;
 			this.resourceName = resourceName;
-			this.price = price;
 		}
 
 		public void execute() {
-			bookingService.createBooking(language, bookingId, personName, resourceName, price);
+			bookingService.createBooking(language, bookingId, personName, resourceName);
 		}
 
 		public void undo() {
@@ -48,7 +46,6 @@ public class BookingClient {
 		private String snapLanguage;
 		private String snapPersonName;
 		private String snapResourceName;
-		private double snapPrice;
 		
 		public DeleteCommand(BookingService bookingService, String bookingId) {
 			this.bookingService = bookingService;
@@ -62,19 +59,18 @@ public class BookingClient {
 			this.snapLanguage = b.header().startsWith("Booking") ? "EN" : "DE";
 			this.snapPersonName = b.getPerson().getName();
 			this.snapResourceName = b.getResource().getName();
-			this.snapPrice = b.getPrice();
 			
 			bookingService.deleteBooking(bookingId);
 		}
 
 		public void undo() {
-			bookingService.createBooking(snapLanguage, bookingId, snapPersonName, snapResourceName, snapPrice);
+			bookingService.createBooking(snapLanguage, bookingId, snapPersonName, snapResourceName);
 		}
 	}
 
 	private static final class History {
-		private final Command[] undo = new Command[200];
-		private final Command[] redo = new Command[200];
+		private final Command[] undo = new Command[10];
+		private final Command[] redo = new Command[10];
 		private int uTop = 0, rTop = 0;
 
 		public void execute(Command cmd) {
@@ -194,10 +190,7 @@ public class BookingClient {
 		System.out.println("Enter car name: ");
 		String resourceName = scanner.nextLine();
 
-		System.out.println("Enter price: ");
-		double price = Double.parseDouble(scanner.nextLine());
-
-		history.execute(new CreateCommand(bookingSrvce, langCode, bookingId, personName, resourceName, price));
+		history.execute(new CreateCommand(bookingSrvce, langCode, bookingId, personName, resourceName));
 	}
 
 	private void deleteBooking() {
