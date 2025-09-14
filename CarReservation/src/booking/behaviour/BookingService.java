@@ -7,8 +7,8 @@ import person.behaviour.PersonService;
 import resource.behaviour.ResourceService;
 
 public class BookingService {
-	// einfacher Speicher für Bookings
-	private final Booking[] store = new Booking[200];
+	// Speicher, max. 10 Bookings
+	private final Booking[] store = new Booking[10];
 	private int size = 0;
 	
 	private final PersonService personService;

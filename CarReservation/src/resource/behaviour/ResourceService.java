@@ -3,8 +3,8 @@ package resource.behaviour;
 import resource.structure.Resource;
 
 public class ResourceService {
-	// Speicher
-	private final Resource [] store = new Resource[200];
+	// Speicher, max. 10 Ressourcen
+	private final Resource [] store = new Resource[10];
 	private int size = 0;
 	
 	public void addResource(Resource r) {

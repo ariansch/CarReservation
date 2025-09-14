@@ -6,8 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class PersonService {
-	// Speicher
-	private final Person[] store = new Person[200];
+	// Speicher, max. 10 Personen
+	private final Person[] store = new Person[10];
 	private int size = 0;
 	
 	public void createPerson(String type, String name) {
