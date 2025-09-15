@@ -41,7 +41,7 @@ class ResourceServiceTest {
 		
 		Resource sel = resourceService.getSelectedResource("Audi A8");
 		assertEquals(430, sel.getPrice()); // 400 + 30 für SetTopBox
-		assertTrue(sel.toString().contains("SetTopBox"));
+		assertTrue(sel.toString().contains("Set Top Box"));
 	}
 	
 	@Test
@@ -51,7 +51,7 @@ class ResourceServiceTest {
 		
 		Resource sel = resourceService.getSelectedResource("Mercedes EQE");
 		assertEquals(495, sel.getPrice()); // 450 + 30 + 15 für SetTopBox und ChildSeat
-		assertTrue(sel.toString().contains("SetTopBox"));
+		assertTrue(sel.toString().contains("Set Top Box"));
 		assertTrue(sel.toString().contains("Child Seat"));
 	}
 	
