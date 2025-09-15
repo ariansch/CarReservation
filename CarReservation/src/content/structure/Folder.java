@@ -38,9 +38,9 @@ public class Folder extends Content {
     @Override
     public void print(StringBuilder out, int indent) {
         out.append(" ".repeat(Math.max(0, indent)))
-           .append("Ordner ").append(getName())
-           .append("  [Buchungen=").append(getBookingTotal())
-           .append(", Zahlungen=").append(getPaymentTotal()).append("]")
+           .append("Folder").append(getName())
+           .append("  [Bookings =").append(getBookingTotal())
+           .append(", Payments =").append(getPaymentTotal()).append("]")
            .append(System.lineSeparator());
         for (Content c : children) {
             c.print(out, indent + 2);

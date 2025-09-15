@@ -60,12 +60,12 @@ public class File extends Content {
     @Override
     public void print(StringBuilder out, int indent) {
         out.append(" ".repeat(Math.max(0, indent)))
-           .append("Datei ").append(getName());
+           .append("File ").append(getName());
 
         boolean hasSums = bookingTotal.signum() != 0 || paymentTotal.signum() != 0;
         if (hasSums) {
-            out.append("  [Buchungen=").append(bookingTotal)
-               .append(", Zahlungen=").append(paymentTotal)
+            out.append("  [Bookings =").append(bookingTotal)
+               .append(", (Payments =").append(paymentTotal)
                .append("]");
         }
         if (!payload.isBlank()) {

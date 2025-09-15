@@ -114,7 +114,7 @@ public class ContentService {
         BigDecimal sumP = monthFolder.getPaymentTotal();
 
       
-        String payload = "Monatsübersicht " + ym + " — Buchungen=" + fmt(sumB) + " | Zahlungen=" + fmt(sumP);
+        String payload = "Monthly summary " + ym + " — Bookings =" + fmt(sumB) + " | Payments =" + fmt(sumP);
 
         File summary = File.summary(summaryName, sumB, sumP, payload);
         monthFolder.add(summary);
@@ -134,7 +134,7 @@ public class ContentService {
         BigDecimal sumP = yearFolder.getPaymentTotal();
 
       
-        String payload = "Jahresübersicht " + year + " — Buchungen=" + fmt(sumB) + " | Zahlungen=" + fmt(sumP);
+        String payload = "Yearly summary " + year + " — Bookings =" + fmt(sumB) + " | Payments =" + fmt(sumP);
 
         File summary = File.summary(summaryName, sumB, sumP, payload);
         yearFolder.add(summary);

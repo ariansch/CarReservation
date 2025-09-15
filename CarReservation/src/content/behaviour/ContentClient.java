@@ -121,14 +121,14 @@ public class ContentClient {
 
     public void start() {
         while (true) {
-        	System.out.println("\n--- Content Paket-Menü ---");
-            System.out.println("1. Daten eingeben");
-            System.out.println("2. Daten löschen");
-            System.out.println("3. Daten ausgeben");
+        	System.out.println("\n--- Content Menu ---");
+            System.out.println("1. Add Entry (Booking/Payment)");
+            System.out.println("2. Delete Entry");
+            System.out.println("3. Show Content Tree");
             System.out.println("4. Undo");
             System.out.println("5. Redo");
-            System.out.println("6. Exit");
-            System.out.print("Ihre Wahl: ");
+            System.out.println("6. Back to Main Menu");
+            System.out.print("Your choice: ");
 
             String choice = scanner.nextLine().trim();
             try {
@@ -138,7 +138,7 @@ public class ContentClient {
                     case "3" -> System.out.println(contentService.printTree());
                     case "4" -> { if (history.canUndo()) history.undo(); else System.out.println("Nothing to undo."); }
                     case "5" -> { if (history.canRedo()) history.redo(); else System.out.println("Nothing to redo."); }
-                    case "6" -> { System.out.println("Exiting..."); return; }
+                    case "6" -> { System.out.println("Back to Main Menu..."); return; }
                     default -> System.out.println("Invalid option. Please try again.");
                 }
             } catch (Exception ex) {
@@ -148,24 +148,24 @@ public class ContentClient {
     }
 
     private void createRecord() {
-        Year year = readYear("Jahr (z.B. 2025): ");
-        Month month = readMonth("Monat (1-12): ");
-        System.out.print("Typ (B=Booking, P=Payment): ");
+        Year year = readYear("Enter year (e.g., 2025): ");
+        Month month = readMonth("Enter month (1-12): ");
+        System.out.print("Type (B=Booking, P=Payment): ");
         String type = scanner.nextLine().trim().toUpperCase();
         boolean isBooking = type.startsWith("B");
 
-        System.out.print("Name der Datei: ");
+        System.out.print("Entry name: ");
         String name = scanner.nextLine().trim();
 
-        BigDecimal amount = readBigDecimal("Betrag (z.B. 99.90): ");
+        BigDecimal amount = readBigDecimal("Amount (e.g., 99.90): ");
 
         history.execute(new CreateCommand(contentService, year, month, name, isBooking, amount));
     }
 
     private void deleteRecord() {
-        Year year = readYear("Jahr der Datei: ");
-        Month month = readMonth("Monat der Datei (1-12): ");
-        System.out.print("Name der zu löschenden Datei: ");
+        Year year = readYear("Year of entry: ");
+        Month month = readMonth("Month of entry (1-12): ");
+        System.out.print("Name of entry to delete: ");
         String name = scanner.nextLine().trim();
 
         history.execute(new DeleteCommand(contentService, year, month, name));
@@ -178,7 +178,7 @@ public class ContentClient {
             try {
                 return Year.of(Integer.parseInt(s));
             } catch (Exception ignored) {
-                System.out.println("Bitte eine gültige Jahreszahl eingeben.");
+                System.out.println("Please enter a valid four-digit year ");
             }
         }
     }
@@ -192,7 +192,7 @@ public class ContentClient {
                 if (m < 1 || m > 12) throw new IllegalArgumentException();
                 return Month.of(m);
             } catch (Exception ignored) {
-                System.out.println("Bitte eine Zahl von 1 bis 12 eingeben.");
+                System.out.println("Please enter a number from 1 to 12: ");
             }
         }
     }
@@ -204,7 +204,7 @@ public class ContentClient {
             try {
                 return new BigDecimal(s);
             } catch (Exception ignored) {
-                System.out.println("Bitte einen gültigen Dezimalbetrag eingeben (z.B. 99.90).");
+                System.out.println("Please enter a valid decimal amount (e.g., 99.90): ");
             }
         }
     }

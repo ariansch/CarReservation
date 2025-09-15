@@ -117,9 +117,9 @@ public class StatisticsClient {
 	public void start() {
 		while (true) {
 			System.out.println("\n--- Statistics Menu ---");
-			System.out.println("1. Auswahl tätigen");
-			System.out.println("2. Auswahl löschen");
-			System.out.println("3. Ergebnisse anzeigen");
+			System.out.println("1. Set Selection");
+			System.out.println("2. Clear Selectiion");
+			System.out.println("3. Show Statistics");
 			System.out.println("4. Undo");
 			System.out.println("5. Redo");
 			System.out.println("6. Exit");
@@ -146,10 +146,10 @@ public class StatisticsClient {
 					if (history.canRedo())
 						history.redo();
 					else
-						System.out.println("Nothing to redo.");
+						System.out.println("Nothing to redo."); 
 					break;
 				case "6":
-					System.out.println("Existing ");
+					System.out.println("Back to Main Menu... ");
 					return;
 				default:
 					System.out.println("Invalid option. Please try again.");
@@ -161,10 +161,10 @@ public class StatisticsClient {
 	}
 
 	private void setSelection() {
-		System.out.print("IDs hier eingeben): ");
+		System.out.print("Enter Booking IDs (comma-seperated!): ");
 		String line = scanner.nextLine().trim();
 		if (line.isBlank()) {
-			System.out.println("Keine IDs eingegeben ");
+			System.out.println("No IDs entered");
 			return;
 		}
 		String[] parts = line.split(",");
@@ -177,16 +177,16 @@ public class StatisticsClient {
 			if (b != null) {
 				newSel.add(b);
 			} else {
-				System.out.println("Booking mit ID '" + id + "' nicht gefunden ");
+				System.out.println("Booking with ID '" + id + "' not found ");
 			}
 		}
 		history.execute(new SetSelectionCommand(selection, newSel));
-		System.out.println("Auswahl gesetzt: " + selection.size() + " Buchung/Buchungen.");
+		System.out.println("Selection set: " + selection.size() + " Booking(s).");
 	}
 
 	private void clearSelection() {
 		history.execute(new ClearSelectionCommand(selection));
-		System.out.println("Auswahl gelöscht.");
+		System.out.println("Selection cleared.");
 	}
 
 	 private void showResults() {
@@ -194,20 +194,20 @@ public class StatisticsClient {
 	        List<Booking> en = statisticsService.filterEnglish(selection);
 	        StatisticsService.Result res = statisticsService.compute(selection);
 
-	        System.out.println("Deutsche Buchungen:");
-	        if (de.isEmpty()) System.out.println("- keine deutschen Buchungen -");
+	        System.out.println("German bookings:");
+	        if (de.isEmpty()) System.out.println("- none -");
 	        else for (Booking b : de) System.out.println("- " + b.getBookingId());
 
-	        System.out.println("Englische Buchungen:");
+	        System.out.println("English bookings:");
 	        if (en.isEmpty()) System.out.println("- keine englischen Buchungen -");
 	        else for (Booking b : en) System.out.println("- " + b.getBookingId());
 
-	        System.out.println("Summe und Anzahl:");
+	        System.out.println("Totals and counts:");
 	        System.out.println("DE -- count=" + res.getGermanCount() + ", total=" + res.getGermanTotal());
 	        System.out.println("EN -- count=" + res.getEnglishCount() + ", total=" + res.getEnglishTotal());
 
 	      
-	        System.out.println("Nach Zahlungsart:");
+	        System.out.println("By payment method:");
 	        var dePP = statisticsService.getGermanBookingsPaidByPayPal(selection);
 	        var deGW = statisticsService.getGermanBookingsPaidByGoogleWallet(selection);
 	        var deMM = statisticsService.getGermanBookingsPaidByMoneyWallet(selection);
